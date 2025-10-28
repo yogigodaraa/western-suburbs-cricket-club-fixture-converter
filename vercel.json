@@ -1,0 +1,14 @@
+{
+  "buildCommand": "cd wscc-web && npm run build",
+  "installCommand": "cd wscc-web && npm install",
+  "devCommand": "cd wscc-web && npm run dev",
+  "outputDirectory": "wscc-web/.next",
+  "framework": "nextjs",
+  "root": "wscc-web",
+  "functions": {
+    "wscc-web/src/app/api/**/*.ts": {
+      "maxDuration": 60,
+      "memory": 1024
+    }
+  }
+}
