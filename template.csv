@@ -1,2 +1,0 @@
-event_name,start_date,end_date,start_time,end_time,description,location,access_groups,rsvp,comments,attendance_tracking,duty_roster,ticketing,reference_id
-Example,2021-01-15,2021-01-15,15:00,17:00,This is a format example,"999 Flinders Street, Melbourne VIC","1st XI,2nd XI,3rd XI,4th XI,Colts,Committee,FOCUS OVER 40'S,FOCUS OVER 60'S,General Members,Metro Vets,One Day 1,One Day 2,One Day 3,One Day 4,One Day 5,T20 Div 1,T20 Div 2,T20 Div 3,Women's",false,true,false,true,false,""
