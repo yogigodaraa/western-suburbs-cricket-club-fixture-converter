@@ -2,7 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { parse as csvParse } from 'csv-parse/sync';
 import { stringify as csvStringify } from 'csv-stringify/sync';
 
+// Route segment config for Next.js 14+
 export const maxDuration = 60;
+export const dynamic = 'force-dynamic';
 
 type AdvancedFixture = {
   'Game Date': string;
