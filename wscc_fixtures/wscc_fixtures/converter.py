@@ -50,3 +50,12 @@ class FixtureConverter:
         fixtures = self.read_advanced_format(input_path)
         df = self.to_template_format(fixtures)
         df.to_csv(output_path, index=False)
+def validate_fixture_data(data):
+    """Validate incoming fixture data"""
+    if not data:
+        raise ValueError("Empty fixture data")
+    required_fields = ["date", "team_home", "team_away"]
+    for field in required_fields:
+        if field not in data:
+            raise ValueError(f"Missing required field: {field}")
+    return True
