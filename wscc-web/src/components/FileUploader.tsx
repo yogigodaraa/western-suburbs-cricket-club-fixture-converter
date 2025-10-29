@@ -351,3 +351,11 @@ export default function FileUploader() {
     </div>
   );
 }
+// Add improved error handling
+export const handleError = (error: Error) => {
+  console.error("File upload error:", error);
+  return {
+    success: false,
+    message: error.message || "An error occurred during file upload"
+  };
+};

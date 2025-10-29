@@ -1,7 +1,11 @@
 import { NextRequest } from 'next/server';
 import { parse } from 'csv-parse/sync';
 import { stringify } from 'csv-stringify/sync';
-import { processFixtureData } from '../route';
+import { processFixtureData } from '@/utils/fixtureConverter';
+
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+export const maxDuration = 60;
 
 export async function POST(request: NextRequest) {
   try {
@@ -11,12 +15,14 @@ export async function POST(request: NextRequest) {
     const settings = JSON.parse(data.get('settings') as string);
     
     if (!file) {
+      console.error('No file provided in request');
       return new Response(
         JSON.stringify({ error: 'No file provided' }),
-        { status: 400 }
+        { status: 400, headers: { 'Content-Type': 'application/json' } }
       );
     }
 
+    console.log(`Processing file: ${file.name}, size: ${file.size}`);
     const fileContent = await file.text();
     const originalRecords = parse(fileContent, {
       skip_empty_lines: true,
@@ -56,8 +62,11 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('Error processing file:', error);
     return new Response(
-      JSON.stringify({ error: 'Error processing file' }),
-      { status: 500 }
+      JSON.stringify({ 
+        error: 'Error processing file',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      }),
+      { status: 500, headers: { 'Content-Type': 'application/json' } }
     );
   }
 }
