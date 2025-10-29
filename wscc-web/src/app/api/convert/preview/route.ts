@@ -1,11 +1,11 @@
 import { NextRequest } from 'next/server';
 import { parse } from 'csv-parse/sync';
 import { stringify } from 'csv-stringify/sync';
-import { processFixtureData } from '../route';
+import { processFixtureData } from '@/utils/fixtureConverter';
 
-// Route segment config for Next.js 14+
-export const maxDuration = 60;
+export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
+export const maxDuration = 60;
 
 export async function POST(request: NextRequest) {
   try {
