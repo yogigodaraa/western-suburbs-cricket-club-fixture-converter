@@ -14,12 +14,34 @@ const accessGroups = [
   "Veterans"
 ] as const;
 
+const grades = [
+  "1st Grade",
+  "2nd Grade",
+  "3rd Grade",
+  "4th Grade",
+  "5th Grade",
+  "6th Grade",
+  "7th Grade",
+  "One Day Grade 1",
+  "One Day Grade 2",
+  "One Day Grade 3",
+  "One Day Grade 4",
+  "One Day Grade 5 Black",
+  "One Day Grade 5 Gold",
+  "Trial Matches",
+  "Colts T20",
+  "RJR Sports T20 Division 1",
+  "Twenty20 Div 2",
+  "Twenty20 Div 3"
+] as const;
+
 const defaultSettings = {
   trackAttendance: true,
   enableComments: true,
   enableDutyRoster: true,
   gameDuration: 120, // minutes
-  enableTicketing: false
+  enableTicketing: true,
+  generateForAllGrades: true
 };
 
 interface PreviewData {
@@ -40,9 +62,29 @@ export default function FileUploader() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [selectedAccessGroup, setSelectedAccessGroup] = useState<typeof accessGroups[number]>(accessGroups[0]);
+  const [selectedGrades, setSelectedGrades] = useState<Set<string>>(new Set(grades)); // All selected by default
+  const [showGradesDropdown, setShowGradesDropdown] = useState(false);
   const [settings, setSettings] = useState(defaultSettings);
   const [showHelp, setShowHelp] = useState(true); // Show help by default for new users
   const [previewData, setPreviewData] = useState<PreviewData | null>(null);
+
+  const toggleGrade = (grade: string) => {
+    const newGrades = new Set(selectedGrades);
+    if (newGrades.has(grade)) {
+      newGrades.delete(grade);
+    } else {
+      newGrades.add(grade);
+    }
+    setSelectedGrades(newGrades);
+  };
+
+  const toggleAllGrades = () => {
+    if (selectedGrades.size === grades.length) {
+      setSelectedGrades(new Set());
+    } else {
+      setSelectedGrades(new Set(grades));
+    }
+  };
 
   const onDrop = useCallback(async (acceptedFiles: File[]) => {
     if (acceptedFiles.length === 0) return;
@@ -61,6 +103,7 @@ export default function FileUploader() {
     const formData = new FormData();
     formData.append('file', file);
     formData.append('accessGroup', selectedAccessGroup);
+    formData.append('selectedGrades', JSON.stringify(Array.from(selectedGrades)));
     formData.append('settings', JSON.stringify(settings));
 
     try {
@@ -73,7 +116,7 @@ export default function FileUploader() {
     } finally {
       setIsUploading(false);
     }
-  }, [settings, selectedAccessGroup]);
+  }, [settings, selectedAccessGroup, selectedGrades]);
 
   const handleDownload = async () => {
     if (!previewData) return;
@@ -84,6 +127,7 @@ export default function FileUploader() {
       const file = new File([blob], 'fixture.csv', { type: 'text/csv' });
       formData.append('file', file);
       formData.append('accessGroup', selectedAccessGroup);
+      formData.append('selectedGrades', JSON.stringify(Array.from(selectedGrades)));
       formData.append('settings', JSON.stringify(settings));
 
       const response = await axios.post('/api/convert', formData, {
@@ -159,6 +203,49 @@ export default function FileUploader() {
                 </option>
               ))}
             </select>
+
+            <label className="block text-xl font-medium text-gray-700 mt-6">
+              Which grades?
+            </label>
+            <div className="relative">
+              <button
+                onClick={() => setShowGradesDropdown(!showGradesDropdown)}
+                className="block w-full rounded-lg border-2 border-gray-300 py-4 px-4 text-lg text-left focus:border-blue-500 focus:ring-2 focus:ring-blue-200 bg-white hover:border-blue-500 transition-colors"
+              >
+                <span className="text-gray-700">
+                  {selectedGrades.size === grades.length ? '✓ All Grades' : `${selectedGrades.size} grades selected`}
+                </span>
+              </button>
+
+              {showGradesDropdown && (
+                <div className="absolute top-full left-0 right-0 mt-2 bg-white border-2 border-gray-300 rounded-lg shadow-lg z-10 max-h-96 overflow-y-auto">
+                  <div className="p-4 border-b border-gray-200">
+                    <label className="flex items-center space-x-3 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={selectedGrades.size === grades.length}
+                        onChange={toggleAllGrades}
+                        className="h-5 w-5 text-blue-600"
+                      />
+                      <span className="text-lg font-medium text-gray-700">All Grades</span>
+                    </label>
+                  </div>
+                  <div className="p-4 space-y-3">
+                    {grades.map((grade) => (
+                      <label key={grade} className="flex items-center space-x-3 cursor-pointer hover:bg-gray-50 p-2 rounded">
+                        <input
+                          type="checkbox"
+                          checked={selectedGrades.has(grade)}
+                          onChange={() => toggleGrade(grade)}
+                          className="h-5 w-5 text-blue-600"
+                        />
+                        <span className="text-lg text-gray-700">{grade}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
 
           <div className="space-y-3">
@@ -222,6 +309,16 @@ export default function FileUploader() {
                 className="h-6 w-6 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
               />
               <span className="text-lg text-gray-700">Enable Ticketing</span>
+            </label>
+
+            <label className="flex items-center space-x-4">
+              <input
+                type="checkbox"
+                checked={settings.generateForAllGrades}
+                onChange={(e) => setSettings({...settings, generateForAllGrades: e.target.checked})}
+                className="h-6 w-6 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+              />
+              <span className="text-lg text-gray-700">Generate for All Grades Together</span>
             </label>
           </div>
         </div>
