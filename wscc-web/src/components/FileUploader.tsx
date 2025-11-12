@@ -14,27 +14,6 @@ const accessGroups = [
   "Veterans"
 ] as const;
 
-const grades = [
-  "1st Grade",
-  "2nd Grade",
-  "3rd Grade",
-  "4th Grade",
-  "5th Grade",
-  "6th Grade",
-  "7th Grade",
-  "One Day Grade 1",
-  "One Day Grade 2",
-  "One Day Grade 3",
-  "One Day Grade 4",
-  "One Day Grade 5 Black",
-  "One Day Grade 5 Gold",
-  "Trial Matches",
-  "Colts T20",
-  "RJR Sports T20 Division 1",
-  "Twenty20 Div 2",
-  "Twenty20 Div 3"
-] as const;
-
 const defaultSettings = {
   trackAttendance: true,
   enableComments: true,
@@ -62,7 +41,8 @@ export default function FileUploader() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [selectedAccessGroup, setSelectedAccessGroup] = useState<typeof accessGroups[number]>(accessGroups[0]);
-  const [selectedGrades, setSelectedGrades] = useState<Set<string>>(new Set(grades)); // All selected by default
+  const [availableGrades, setAvailableGrades] = useState<string[]>([]); // Will be populated from CSV
+  const [selectedGrades, setSelectedGrades] = useState<Set<string>>(new Set()); // All selected by default
   const [showGradesDropdown, setShowGradesDropdown] = useState(false);
   const [settings, setSettings] = useState(defaultSettings);
   const [showHelp, setShowHelp] = useState(true); // Show help by default for new users
@@ -79,10 +59,10 @@ export default function FileUploader() {
   };
 
   const toggleAllGrades = () => {
-    if (selectedGrades.size === grades.length) {
+    if (selectedGrades.size === availableGrades.length) {
       setSelectedGrades(new Set());
     } else {
-      setSelectedGrades(new Set(grades));
+      setSelectedGrades(new Set(availableGrades));
     }
   };
 
@@ -100,10 +80,31 @@ export default function FileUploader() {
     setSuccess(null);
     setPreviewData(null);
 
+    // Read CSV to extract unique grades/teams
+    const text = await file.text();
+    const lines = text.split('\n');
+    const headers = lines[0].split(',').map((h: string) => h.replace(/"/g, '').trim());
+    const gradeIndex = headers.indexOf('Grade');
+    
+    const uniqueGrades = new Set<string>();
+    for (let i = 1; i < lines.length; i++) {
+      if (lines[i].trim()) {
+        const cells = lines[i].split(',');
+        const grade = cells[gradeIndex]?.replace(/"/g, '').trim();
+        if (grade) {
+          uniqueGrades.add(grade);
+        }
+      }
+    }
+    
+    const sortedGrades = Array.from(uniqueGrades).sort();
+    setAvailableGrades(sortedGrades);
+    setSelectedGrades(new Set(sortedGrades)); // Select all by default
+
     const formData = new FormData();
     formData.append('file', file);
     formData.append('accessGroup', selectedAccessGroup);
-    formData.append('selectedGrades', JSON.stringify(Array.from(selectedGrades)));
+    formData.append('selectedGrades', JSON.stringify(sortedGrades));
     formData.append('settings', JSON.stringify(settings));
 
     try {
@@ -205,7 +206,7 @@ export default function FileUploader() {
             </select>
 
             <label className="block text-xl font-medium text-gray-700 mt-6">
-              Which grades?
+              Which teams?
             </label>
             <div className="relative">
               <button
@@ -213,7 +214,7 @@ export default function FileUploader() {
                 className="block w-full rounded-lg border-2 border-gray-300 py-4 px-4 text-lg text-left focus:border-blue-500 focus:ring-2 focus:ring-blue-200 bg-white hover:border-blue-500 transition-colors"
               >
                 <span className="text-gray-700">
-                  {selectedGrades.size === grades.length ? '✓ All Grades' : `${selectedGrades.size} grades selected`}
+                  {selectedGrades.size === availableGrades.length ? '✓ All Teams' : `${selectedGrades.size} teams selected`}
                 </span>
               </button>
 
@@ -223,15 +224,15 @@ export default function FileUploader() {
                     <label className="flex items-center space-x-3 cursor-pointer">
                       <input
                         type="checkbox"
-                        checked={selectedGrades.size === grades.length}
+                        checked={selectedGrades.size === availableGrades.length}
                         onChange={toggleAllGrades}
                         className="h-5 w-5 text-blue-600"
                       />
-                      <span className="text-lg font-medium text-gray-700">All Grades</span>
+                      <span className="text-lg font-medium text-gray-700">All Teams</span>
                     </label>
                   </div>
                   <div className="p-4 space-y-3">
-                    {grades.map((grade) => (
+                    {availableGrades.map((grade: string) => (
                       <label key={grade} className="flex items-center space-x-3 cursor-pointer hover:bg-gray-50 p-2 rounded">
                         <input
                           type="checkbox"
