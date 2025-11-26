@@ -3,15 +3,27 @@
 import { useCallback, useState } from 'react';
 import { useDropzone } from 'react-dropzone';
 import axios from 'axios';
+import { getDisplayNameFromGrade } from '@/utils/teamMapping';
 
 const accessGroups = [
-  "Women's",
-  "Men's",
-  "Junior Boys",
-  "Junior Girls",
-  "Senior Men's",
-  "Senior Women's",
-  "Veterans"
+  "1st XI",
+  "2nd XI",
+  "3rd XI",
+  "4th XI",
+  "Colts",
+  "Committee",
+  "FOCUS Vets",
+  "General Members",
+  "Metro Vets",
+  "One Day 1",
+  "One Day 2",
+  "One Day 3",
+  "One Day 4",
+  "One Day 5",
+  "T20 Div 1",
+  "T20 Div 2",
+  "T20 Div 3",
+  "Women's"
 ] as const;
 
 const defaultSettings = {
@@ -47,6 +59,7 @@ export default function FileUploader() {
   const [settings, setSettings] = useState(defaultSettings);
   const [showHelp, setShowHelp] = useState(true); // Show help by default for new users
   const [previewData, setPreviewData] = useState<PreviewData | null>(null);
+  const [uploadedFileName, setUploadedFileName] = useState<string | null>(null);
 
   const toggleGrade = (grade: string) => {
     const newGrades = new Set(selectedGrades);
@@ -79,6 +92,7 @@ export default function FileUploader() {
     setError(null);
     setSuccess(null);
     setPreviewData(null);
+    setUploadedFileName(file.name); // Store the filename
 
     // Read CSV to extract unique grades/teams
     const text = await file.text();
@@ -138,7 +152,15 @@ export default function FileUploader() {
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement('a');
       link.href = url;
-      link.setAttribute('download', 'converted_fixture.csv');
+      
+      // Create filename: remove .csv extension and add "converted_" prefix
+      let downloadName = 'converted_fixture.csv';
+      if (uploadedFileName) {
+        const nameWithoutExt = uploadedFileName.replace('.csv', '');
+        downloadName = `${nameWithoutExt}_converted.csv`;
+      }
+      
+      link.setAttribute('download', downloadName);
       document.body.appendChild(link);
       link.click();
       link.remove();
@@ -232,7 +254,7 @@ export default function FileUploader() {
                     </label>
                   </div>
                   <div className="p-4 space-y-3">
-                    {availableGrades.map((grade: string) => (
+                  {availableGrades.map((grade: string) => (
                       <label key={grade} className="flex items-center space-x-3 cursor-pointer hover:bg-gray-50 p-2 rounded">
                         <input
                           type="checkbox"
@@ -240,7 +262,7 @@ export default function FileUploader() {
                           onChange={() => toggleGrade(grade)}
                           className="h-5 w-5 text-blue-600"
                         />
-                        <span className="text-lg text-gray-700">{grade}</span>
+                        <span className="text-lg text-gray-700">{getDisplayNameFromGrade(grade)}</span>
                       </label>
                     ))}
                   </div>

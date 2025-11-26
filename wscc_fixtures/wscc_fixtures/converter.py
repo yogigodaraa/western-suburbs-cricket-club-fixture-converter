@@ -47,9 +47,28 @@ class FixtureConverter:
 
     def convert_file(self, input_path: str, output_path: str) -> None:
         """Convert a file from advanced format to template format."""
-        fixtures = self.read_advanced_format(input_path)
-        df = self.to_template_format(fixtures)
-        df.to_csv(output_path, index=False)
+        df = pd.read_csv(input_path)
+        all_fixtures = []
+        
+        for _, row in df.iterrows():
+            # Check if there are multiple dates separated by comma
+            game_date_str = str(row.get('Game Date', '')).strip()
+            dates = [d.strip() for d in game_date_str.split(',') if d.strip()]
+            
+            if len(dates) > 1:
+                # Multiple dates - create a fixture for each date
+                for single_date in dates:
+                    row_copy = row.copy()
+                    row_copy['Game Date'] = single_date
+                    fixture = Fixture.from_advanced_format(row_copy)
+                    all_fixtures.append(fixture)
+            else:
+                # Single date - process normally
+                fixture = Fixture.from_advanced_format(row)
+                all_fixtures.append(fixture)
+        
+        df_output = self.to_template_format(all_fixtures)
+        df_output.to_csv(output_path, index=False)
 def validate_fixture_data(data):
     """Validate incoming fixture data"""
     if not data:

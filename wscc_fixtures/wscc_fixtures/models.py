@@ -4,6 +4,7 @@ WSCC Fixtures data models.
 from dataclasses import dataclass
 from datetime import datetime, time
 from typing import Optional
+from .team_mapping import normalize_team_name, get_display_name_from_grade
 
 @dataclass
 class Fixture:
@@ -27,11 +28,32 @@ class Fixture:
     def from_advanced_format(cls, data: dict) -> 'Fixture':
         """Create a Fixture from advanced format data."""
         game_date = datetime.strptime(data['Game Date'], '%d/%m/%Y')
-        game_time = datetime.strptime(data['Time'], '%H:%M').time()
-        end_time = time(game_time.hour + 2, game_time.minute)  # Assume 2 hours duration
+        
+        # Handle empty or missing time - default to 12:00
+        time_str = data.get('Time', '').strip() or '12:00'
+        game_time = datetime.strptime(time_str, '%H:%M').time()
+        
+        # Calculate end time based on duration (default 2 hours)
+        end_hour = game_time.hour + 2
+        end_minute = game_time.minute
+        if end_hour >= 24:
+            end_hour -= 24
+        end_time = time(end_hour, end_minute)
 
-        event_name = f"{data['Grade']} vs {data['Home Team'] if 'Western Suburbs' in data['Away Team'] else data['Away Team']}"
-        description = f"{data['Game Type']} {data['Round']}: {data['Home Team']} vs {data['Away Team']}"
+        # Determine which team is Western Suburbs
+        is_home_wscc = 'Western Suburbs' in data['Home Team']
+        wscc_team = data['Home Team'] if is_home_wscc else data['Away Team']
+        opponent = data['Away Team'] if is_home_wscc else data['Home Team']
+        
+        # Normalize team names
+        normalized_wscc = normalize_team_name(wscc_team)
+        normalized_opponent = normalize_team_name(opponent)
+        
+        # Get display grade name
+        display_grade = get_display_name_from_grade(data['Grade'])
+        
+        event_name = f"{display_grade} vs {normalized_opponent}"
+        description = f"{data['Game Type']} {data['Round']}: {normalized_wscc} vs {normalized_opponent}"
 
         return cls(
             event_name=event_name,

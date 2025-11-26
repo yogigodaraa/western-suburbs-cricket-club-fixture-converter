@@ -1,3 +1,5 @@
+import { normalizeTeamName, getDisplayNameFromGrade } from './teamMapping';
+
 type AdvancedFixture = {
   'Game Date': string;
   'Game Type': string;
@@ -28,31 +30,67 @@ type TemplateFixture = {
 };
 
 function convertFixture(fixture: AdvancedFixture, accessGroup: string, settings: any): TemplateFixture {
-  // Parse date and time
-  const [day, month, year] = fixture['Game Date'].split('/');
-  const startDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+  // Parse date and time - handle both DD/MM/YYYY and other formats
+  let startDate = '';
+  try {
+    const dateParts = fixture['Game Date'].split('/');
+    if (dateParts.length === 3) {
+      const day = dateParts[0];
+      const month = dateParts[1];
+      const year = dateParts[2];
+      startDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+    } else {
+      // Fallback if date format is different
+      startDate = fixture['Game Date'];
+    }
+  } catch (e) {
+    startDate = fixture['Game Date'];
+  }
   
   // Calculate times
-  const [hour, minute] = fixture['Time'].split(':');
-  const duration = settings.gameDuration || 120; // default to 120 minutes
-  const startHour = parseInt(hour);
-  const endHourValue = Math.floor(startHour + duration / 60);
-  const endMinuteValue = (parseInt(minute) + duration % 60);
-  const adjustedEndHour = Math.floor(endHourValue + endMinuteValue / 60);
-  const adjustedEndMinute = (endMinuteValue % 60).toString().padStart(2, '0');
+  let startTimeStr = '12:00'; // Default to 12:00 PM if no time provided
+  let endTimeStr = '14:00';   // Default end time
   
-  // Determine the main team name
-  const isHomeTeam = fixture['Away Team'].includes('Western Suburbs');
-  const mainTeam = isHomeTeam ? fixture['Home Team'] : fixture['Away Team'];
-  const endMinute = (parseInt(minute) + duration % 60).toString().padStart(2, '0');
+  try {
+    // Use provided time or fall back to default
+    const timeToUse = fixture['Time'] && fixture['Time'].trim() ? fixture['Time'] : '12:00';
+    
+    const timeParts = timeToUse.split(':');
+    if (timeParts.length >= 2) {
+      const hour = parseInt(timeParts[0]);
+      const minute = parseInt(timeParts[1]);
+      const duration = settings.gameDuration || 120; // default to 120 minutes
+      
+      const totalMinutes = hour * 60 + minute + duration;
+      const endHour = Math.floor(totalMinutes / 60);
+      const endMinute = totalMinutes % 60;
+      
+      startTimeStr = timeToUse;
+      endTimeStr = `${endHour.toString().padStart(2, '0')}:${endMinute.toString().padStart(2, '0')}`;
+    }
+  } catch (e) {
+    startTimeStr = '12:00';
+    endTimeStr = '14:00';
+  }
+  
+  // Determine which team is Western Suburbs and normalize names
+  const isHomeWSCC = fixture['Home Team'].includes('Western Suburbs');
+  const wsccTeam = isHomeWSCC ? fixture['Home Team'] : fixture['Away Team'];
+  const opponentTeam = isHomeWSCC ? fixture['Away Team'] : fixture['Home Team'];
+  
+  const normalizedWSCC = normalizeTeamName(wsccTeam);
+  const normalizedOpponent = normalizeTeamName(opponentTeam);
+  
+  // Get display grade name
+  const displayGrade = getDisplayNameFromGrade(fixture['Grade']);
 
   return {
-    event_name: `${fixture['Grade']} vs ${mainTeam}`,
+    event_name: `${displayGrade} vs ${normalizedOpponent}`,
     start_date: startDate,
     end_date: startDate,
-    start_time: fixture['Time'],
-    end_time: `${adjustedEndHour}:${adjustedEndMinute}`,
-    description: `${fixture['Game Type']} ${fixture['Round']}: ${fixture['Home Team']} vs ${fixture['Away Team']}`,
+    start_time: startTimeStr,
+    end_time: endTimeStr,
+    description: `${fixture['Game Type']} ${fixture['Round']}: ${normalizedWSCC} vs ${normalizedOpponent}`,
     location: fixture['Playing Surface'],
     access_groups: accessGroup,
     rsvp: 'true',
@@ -86,15 +124,31 @@ export function processFixtureData(records: string[][], accessGroup: string, set
     'reference_id'
   ];
 
-  // Convert each row
-  const convertedRows = dataRows.map(row => {
+  // Convert each row and handle multiple dates
+  const convertedRows: string[][] = [];
+  
+  dataRows.forEach(row => {
     const fixture = originalHeaders.reduce((obj: any, header: string, index: number) => {
       obj[header] = row[index];
       return obj;
     }, {}) as AdvancedFixture;
 
-    const converted = convertFixture(fixture, accessGroup, settings);
-    return headers.map(header => converted[header as keyof TemplateFixture]);
+    // Check if there are multiple dates separated by comma
+    const gameDateStr = fixture['Game Date'] || '';
+    const dates = gameDateStr.split(',').map(d => d.trim()).filter(d => d);
+    
+    if (dates.length > 1) {
+      // Multiple dates - create a row for each date
+      dates.forEach((singleDate, index) => {
+        const fixtureForDate = { ...fixture, 'Game Date': singleDate };
+        const converted = convertFixture(fixtureForDate, accessGroup, settings);
+        convertedRows.push(headers.map(header => converted[header as keyof TemplateFixture]));
+      });
+    } else {
+      // Single date - process normally
+      const converted = convertFixture(fixture, accessGroup, settings);
+      convertedRows.push(headers.map(header => converted[header as keyof TemplateFixture]));
+    }
   });
 
   return { headers, rows: convertedRows };
