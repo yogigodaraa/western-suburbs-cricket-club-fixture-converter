@@ -1,91 +1,65 @@
-# Western Suburbs Cricket Club Fixture Converter
+# Western Suburbs Cricket Club — Fixture Converter
 
-A web-based tool to convert cricket fixture files for Western Suburbs Cricket Club into a standardized format for their scheduling system.
+Convert cricket fixture CSV exports into a standardized format for the club's scheduling system.
 
-## Features
+## What it does
 
-- Easy-to-use web interface
-- Support for different team categories
-- Customizable game settings
-  - Game duration
-  - Attendance tracking
-  - Comments
-  - Duty roster
-  - Ticketing options
-- CSV file conversion
-- Preview before download
-- Responsive design
+Uploads a raw fixture CSV (Game Date, Game Type, Grade, Teams, etc.), lets you filter grades, configure game duration / attendance / duty roster / ticketing options, previews the output in-browser, and downloads a calendar-ready CSV with event names, time ranges, locations, and metadata.
 
-## Tech Stack
+- Automatic home/away team detection from raw fixture rows
+- Multi-grade selection with checkboxes (all-on by default)
+- Configurable per-game duration (default 2 hours)
+- Optional attendance tracking, comments, duty roster, ticketing
+- Before-and-after CSV preview in the browser
 
-- Next.js 14
-- TypeScript
-- Tailwind CSS
-- CSV parsing and generation
+## Tech stack
 
-## Getting Started
+Hybrid full-stack app.
 
-1. Clone the repository
+**Frontend** (`wscc-web/`) — Next.js 14, React 18, TypeScript
+- axios, csv-parse, csv-stringify, formidable, react-dropzone
+
+**Backend** (`wscc_fixtures/`) — Python + Flask
+- pandas (CSV manipulation)
+- python-dateutil (date parsing)
+- click (CLI)
+
+## Getting started
+
+**Frontend**
+
 ```bash
-git clone https://github.com/yogigodaraa/western-suburbs-cricket-club-fixture-converter.git
-cd western-suburbs-cricket-club-fixture-converter
-```
-
-2. Install dependencies
-```bash
+cd wscc-web
 npm install
+npm run dev            # http://localhost:3000
 ```
 
-3. Run the development server
+**Backend**
+
 ```bash
-npm run dev
+cd wscc_fixtures
+pip install -r requirements.txt
+python run.py          # http://localhost:5000
 ```
 
-4. Open [http://localhost:3000](http://localhost:3000) in your browser
+Or use the Docker setup:
 
-## Usage
+```bash
+docker-compose up
+```
 
-1. Select your team category from the dropdown
-2. Configure game settings
-3. Upload your CSV fixture file
-4. Preview the conversion
-5. Download the converted file
+## Project structure
 
-## File Format
+```
+wscc-web/              Next.js frontend
+wscc_fixtures/         Flask backend
+scripts/               Utility scripts
+template.csv           Reference fixture format
+advanced_fixture_*.csv Test fixtures
+docs/                  Notes
+DEPLOYMENT.md          Deployment guide
+```
 
-### Input Format
-The input CSV should contain the following columns:
-- Game Date
-- Game Type
-- Grade
-- Round
-- Time
-- Home Team
-- Away Team
-- Playing Surface
-- Game ID
+## Status
 
-### Output Format
-The converted CSV will contain:
-- event_name
-- start_date
-- end_date
-- start_time
-- end_time
-- description
-- location
-- access_groups
-- rsvp
-- comments
-- attendance_tracking
-- duty_roster
-- ticketing
-- reference_id
-
-## Contributing
-
-Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
-
-## License
-
-[MIT](https://choosealicense.com/licenses/mit/)
+Active WIP. Multiple test fixtures in repo; Docker files present.
