@@ -1,5 +1,8 @@
 # Western Suburbs Cricket Club — Fixture Converter
 
+[![CI](https://github.com/yogigodaraa/western-suburbs-cricket-club-fixture-converter/actions/workflows/ci.yml/badge.svg)](https://github.com/yogigodaraa/western-suburbs-cricket-club-fixture-converter/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+
 Convert cricket fixture CSV exports into a standardized format for the club's scheduling system.
 
 ## What it does
@@ -16,7 +19,7 @@ Uploads a raw fixture CSV (Game Date, Game Type, Grade, Teams, etc.), lets you f
 
 Hybrid full-stack app.
 
-**Frontend** (`wscc-web/`) — Next.js 14, React 18, TypeScript
+**Frontend** (`wscc-web/`): Next.js 15, React 18, TypeScript
 - axios, csv-parse, csv-stringify, formidable, react-dropzone
 
 **Backend** (`wscc_fixtures/`) — Python + Flask
@@ -42,10 +45,11 @@ pip install -r requirements.txt
 python run.py          # http://localhost:5000
 ```
 
-Or use the Docker setup:
+### Tests and checks
 
 ```bash
-docker-compose up
+cd wscc-web && npm ci && npm run typecheck && npm run build
+cd wscc_fixtures && pytest && ruff check .
 ```
 
 ## Project structure
@@ -56,10 +60,9 @@ wscc_fixtures/         Flask backend
 scripts/               Utility scripts
 template.csv           Reference fixture format
 advanced_fixture_*.csv Test fixtures
-docs/                  Notes
 DEPLOYMENT.md          Deployment guide
 ```
 
 ## Status
 
-Active WIP. Multiple test fixtures in repo; Docker files present.
+Active. The web app is the primary tool; the Python package mirrors its conversion rules.
