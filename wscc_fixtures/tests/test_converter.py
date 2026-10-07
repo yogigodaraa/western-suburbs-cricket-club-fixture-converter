@@ -1,3 +1,5 @@
+from wscc_fixtures.security import sanitize_filename
+
 
 def test_sanitize_filename():
     """Test filename sanitization"""

@@ -4,7 +4,6 @@ Test fixtures for the converter.
 import pytest
 from datetime import datetime, time
 from wscc_fixtures.models import Fixture
-from wscc_fixtures.converter import FixtureConverter
 
 @pytest.fixture
 def sample_advanced_data():
@@ -28,7 +27,7 @@ def sample_fixture():
         end_date=datetime(2025, 11, 2),
         start_time=time(14, 0),
         end_time=time(16, 0),
-        description='T20 Round 4: University vs Western Suburbs CC Women\'s',
+        description='T20 Round 4: Western Suburbs CC Women\'s vs University',  # WSCC first, as in the web app
         location='Menzies Park',
         access_groups=['Women\'s'],
         rsvp=False,
