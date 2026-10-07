@@ -2,7 +2,6 @@
 Configuration handling.
 """
 from dataclasses import dataclass
-from typing import Dict, Any
 import json
 import os
 

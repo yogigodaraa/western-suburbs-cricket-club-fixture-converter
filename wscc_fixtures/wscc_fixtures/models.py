@@ -3,7 +3,6 @@ WSCC Fixtures data models.
 """
 from dataclasses import dataclass
 from datetime import datetime, time
-from typing import Optional
 from .team_mapping import normalize_team_name, get_display_name_from_grade
 
 @dataclass

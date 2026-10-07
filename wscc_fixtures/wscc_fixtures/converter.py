@@ -2,7 +2,6 @@
 CSV conversion utilities.
 """
 import pandas as pd
-from datetime import datetime
 from .models import Fixture
 
 class FixtureConverter:
