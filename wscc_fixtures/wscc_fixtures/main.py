@@ -3,7 +3,6 @@ Main entry point for the WSCC Fixtures converter.
 """
 import click
 from .converter import FixtureConverter
-from .config import Config
 
 @click.group()
 def cli():

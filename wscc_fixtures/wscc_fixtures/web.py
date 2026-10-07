@@ -2,7 +2,7 @@
 Web interface for the WSCC Fixtures converter.
 """
 import os
-from flask import Flask, render_template, request, send_file, flash, redirect, url_for
+from flask import Flask, render_template, request, send_file, flash, redirect
 from werkzeug.utils import secure_filename
 from .converter import FixtureConverter
 
