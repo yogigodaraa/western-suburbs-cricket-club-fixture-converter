@@ -27,3 +27,9 @@ yarn-error.log*
 # IDE
 .idea/
 .vscode/
+
+# Generated conversion output
+tmp/
+wscc-web/tmp/
+*.tsbuildinfo
+.venv/
